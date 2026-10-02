@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Mood Forecast</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#fdf1f5;--card:#fff;--ink:#4a3b52;--soft:#8f7f99;--pop:#ff8fb1;--sky:#bfe3ff;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#1f1a29;--card:#2c2539;--ink:#f6e9f3;--soft:#b3a5c2;--pop:#ff8fb1;--sky:#3a4d78}}
+:root[data-theme="dark"]{--bg:#1f1a29;--card:#2c2539;--ink:#f6e9f3;--soft:#b3a5c2;--pop:#ff8fb1;--sky:#3a4d78}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--bg);color:var(--ink);font-family:'Fredoka',ui-rounded,'Trebuchet MS',sans-serif;padding:16px}
+.card{width:100%;max-width:400px;background:var(--card);border-radius:32px;padding:28px 22px;text-align:center;box-shadow:0 10px 0 var(--pop),0 20px 40px rgba(0,0,0,.12)}
+h1{font-size:1.6rem;margin:0 0 4px}
+.sub{color:var(--soft);margin:0 0 18px}
+.mascot{width:150px;height:110px;animation:float 3s ease-in-out infinite}
+@keyframes float{50%{transform:translateY(-8px)}}
+.dots{display:flex;gap:8px;justify-content:center;margin:12px 0}
+.dots i{width:10px;height:10px;border-radius:50%;background:var(--sky)}
+.dots i.on{background:var(--pop)}
+.q{font-size:1.2rem;font-weight:600;margin:8px 0 14px}
+.opts{display:flex;flex-direction:column;gap:10px}
+button{font:inherit;color:var(--ink);background:var(--bg);border:3px solid transparent;border-radius:20px;padding:12px;font-size:1.05rem;cursor:pointer;transition:transform .15s,border-color .15s}
+button:hover{transform:scale(1.04);border-color:var(--pop)}
+.big{background:var(--pop);color:#fff;font-weight:600;margin-top:16px;width:100%}
+.res h2{font-size:1.9rem;margin:6px 0 2px}
+.chance{color:var(--soft);margin:0 0 12px}
+.tip{background:var(--bg);border-radius:18px;padding:12px;font-size:1.02rem}
+</style>
+</head>
+<body>
+<main class="card" id="app"></main>
+<script>
+var Q=[
+{t:"How much energy do you have?",o:[["😴 Barely any",1],["🙂 Some",2],["⚡ Loads!",3]]},
+{t:"How did you sleep?",o:[["🥱 Badly",1],["😌 Okay",2],["🛌 Super well",3]]},
+{t:"How stressed are you?",o:[["🌪️ A lot",1],["😬 A little",2],["🍃 Not at all",3]]}
+];
+var W={
+9:{n:"Sunny",e:"☀️",c:"#ffd666",m:"M40 72 Q75 100 110 72",ch:"Chance of fun: 90%",tip:"Start that thing you've been putting off!"},
+8:{n:"Rainbow Day",e:"🌈",c:"#ffb3d9",m:"M42 72 Q75 96 108 72",ch:"Chance of surprises: 70%",tip:"Message a friend. Good things are coming."},
+7:{n:"Partly Cloudy",e:"⛅",c:"#d6ecff",m:"M45 76 Q75 88 105 76",ch:"Chance of snacks: 80%",tip:"Do one small task, then enjoy a treat."},
+6:{n:"Foggy Brain",e:"🌫️",c:"#e3e0ee",m:"M45 80 L105 80",ch:"Chance of forgetting why you walked in: 60%",tip:"Make a list. Drink some water."},
+5:{n:"Light Drizzle",e:"🌦️",c:"#bcd3f5",m:"M45 84 Q75 70 105 84",ch:"Chance of cozy blankets: 75%",tip:"Slow day. Tea and a soft playlist help."},
+4:{n:"Stormy",e:"⛈️",c:"#a79bd1",m:"M42 88 Q75 66 108 88",ch:"Chance of big feelings: 60%",tip:"Take it slow. Be kind to yourself."}
+};
+var step=0,score=0,app=document.getElementById('app');
+function mascot(c,m,sad){
+ return '<svg class="mascot" viewBox="0 0 150 110"><path d="M35 95 Q8 95 12 68 Q16 48 38 52 Q42 22 72 24 Q100 22 108 48 Q140 46 138 74 Q138 95 112 95 Z" fill="'+c+'"/>'+
+ '<circle cx="58" cy="60" r="6" fill="#4a3b52"/><circle cx="92" cy="60" r="6" fill="#4a3b52"/>'+
+ '<circle cx="46" cy="72" r="6" fill="#ff8fb1" opacity=".6"/><circle cx="104" cy="72" r="6" fill="#ff8fb1" opacity=".6"/>'+
+ '<path d="'+m+'" fill="none" stroke="#4a3b52" stroke-width="4" stroke-linecap="round" transform="translate(0,-12)"/></svg>';
+}
+function ask(){
+ var q=Q[step],h='<h1>Mood Forecast</h1><p class="sub">What\'s the weather inside you?</p>'+mascot("#d6ecff","M45 76 Q75 88 105 76");
+ h+='<div class="dots">'+Q.map(function(_,i){return '<i class="'+(i<=step?'on':'')+'"></i>'}).join('')+'</div>';
+ h+='<div class="q">'+q.t+'</div><div class="opts">'+q.o.map(function(o){return '<button data-v="'+o[1]+'">'+o[0]+'</button>'}).join('')+'</div>';
+ app.innerHTML=h;
+ app.querySelectorAll('button').forEach(function(b){b.onclick=function(){score+=+b.dataset.v;step++;step<Q.length?ask():show()}});
+}
+function show(){
+ var w=W[Math.max(4,score)];
+ app.innerHTML='<div class="res"><p class="sub">Today\'s forecast</p>'+mascot(w.c,w.m)+'<h2>'+w.e+' '+w.n+'</h2><p class="chance">'+w.ch+'</p><div class="tip">💌 '+w.tip+'</div><button class="big" id="again">Forecast again</button></div>';
+ document.getElementById('again').onclick=function(){step=0;score=0;ask()};
+}
+ask();
+</script>
+</body>
+</html>
